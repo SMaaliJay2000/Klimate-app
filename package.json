@@ -7,7 +7,10 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "docker:dev": "docker-compose up --build",
+    "docker:prod": "docker-compose -f docker-compose.prod.yml up --build",
+    "docker:prod:detached": "docker-compose -f docker-compose.prod.yml up -d --build"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.11",
