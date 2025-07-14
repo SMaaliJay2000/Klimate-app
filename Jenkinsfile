@@ -3,26 +3,26 @@ pipeline {
     
     environment {
         // Define image names
-        DEV_IMAGE = "maalijay/klimate-app-dev"
         PROD_IMAGE = "maalijay/klimate-app"
         DOCKER_REGISTRY = "docker.io"
+        GIT_URL = 'https://github.com/SMaaliJay2000/Klimate-app.git'
+        GIT_CREDENTIALS_ID = 'github-credentials'
     }
     
     stages { 
-        stage('SCM Checkout') {
+        stage('Debug Credentials') {
             steps {
-                retry(3) {
-                    git branch: 'main', url: 'https://github.com/SMaaliJay2000/Klimate-app.git'
+                script {
+                    echo "Testing Git credentials with URL: ${GIT_URL}"
+                    bat "git ls-remote ${GIT_URL}"
                 }
             }
         }
         
-        stage('Build Development Image') {
-            steps {  
-                script {
-                    echo "Building development image..."
-                    bat "docker build -t ${DEV_IMAGE}:${BUILD_NUMBER} -f Dockerfile ."
-                    bat "docker tag ${DEV_IMAGE}:${BUILD_NUMBER} ${DEV_IMAGE}:latest"
+        stage('SCM Checkout') {
+            steps {
+                retry(3) {
+                    git credentialsId: "${GIT_CREDENTIALS_ID}", url: "${GIT_URL}", branch: 'main'
                 }
             }
         }
@@ -47,41 +47,12 @@ pipeline {
             }
         }
         
-        stage('Push Development Image') {
-            steps {
-                script {
-                    echo "Pushing development image..."
-                    bat "docker push ${DEV_IMAGE}:${BUILD_NUMBER}"
-                    bat "docker push ${DEV_IMAGE}:latest"
-                }
-            }
-        }
-        
         stage('Push Production Image') {
             steps {
                 script {
                     echo "Pushing production image..."
                     bat "docker push ${PROD_IMAGE}:${BUILD_NUMBER}"
                     bat "docker push ${PROD_IMAGE}:latest"
-                }
-            }
-        }
-        
-        stage('Test Development Container') {
-            steps {
-                script {
-                    echo "Testing development container..."
-                    bat "docker run -d --name klimate-dev-test-${BUILD_NUMBER} -p 5174:5173 ${DEV_IMAGE}:${BUILD_NUMBER}"
-                    
-                    // Wait for container to start
-                    sleep(time: 10, unit: 'SECONDS')
-                    
-                    // Health check (optional)
-                    bat "docker ps | findstr klimate-dev-test-${BUILD_NUMBER}"
-                    
-                    // Clean up test container
-                    bat "docker stop klimate-dev-test-${BUILD_NUMBER}"
-                    bat "docker rm klimate-dev-test-${BUILD_NUMBER}"
                 }
             }
         }
@@ -113,13 +84,9 @@ pipeline {
                 script {
                     echo "Deploying with Docker Compose..."
                     
-                    // Deploy development version
-                    bat "docker-compose -f docker-compose.yml down || echo 'No existing dev containers'"
-                    bat "docker-compose -f docker-compose.yml up -d"
-                    
-                    // Optionally deploy production version
-                    // bat "docker-compose -f docker-compose.prod.yml down || echo 'No existing prod containers'"
-                    // bat "docker-compose -f docker-compose.prod.yml up -d"
+                    // Deploy production version
+                    bat "docker-compose -f docker-compose.prod.yml down || echo 'No existing prod containers'"
+                    bat "docker-compose -f docker-compose.prod.yml up -d"
                 }
             }
         }
@@ -131,19 +98,12 @@ pipeline {
                 echo "Cleaning up..."
                 bat 'docker logout'
                 
-                // Clean up any test containers that might still be running
-                bat "docker stop klimate-dev-test-${BUILD_NUMBER} || echo 'Dev test container not running'"
-                bat "docker rm klimate-dev-test-${BUILD_NUMBER} || echo 'Dev test container not found'"
-                bat "docker stop klimate-prod-test-${BUILD_NUMBER} || echo 'Prod test container not running'"
-                bat "docker rm klimate-prod-test-${BUILD_NUMBER} || echo 'Prod test container not found'"
-                
                 // Clean up dangling images
                 bat "docker image prune -f || echo 'No dangling images to remove'"
             }
         }
         success {
             echo "Pipeline completed successfully!"
-            echo "Development image: ${DEV_IMAGE}:${BUILD_NUMBER}"
             echo "Production image: ${PROD_IMAGE}:${BUILD_NUMBER}"
         }
         failure {
