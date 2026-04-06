@@ -4,12 +4,12 @@ on:
   push:
     branches: [main]
     paths:
-      - "Klimate-app/**"
+      - "**"
       - ".github/workflows/ci-frontend.yml"
   pull_request:
     branches: [main]
     paths:
-      - "Klimate-app/**"
+      - "**"
 
 env:
   NODE_VERSION: "20.x"
@@ -27,19 +27,17 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: "npm"
-          cache-dependency-path: Klimate-app/package-lock.json
+          cache-dependency-path: package-lock.json
 
       - name: Install dependencies
         run: npm ci
-        working-directory: Klimate-app
 
       - name: Build
         run: npm run build
-        working-directory: Klimate-app
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: frontend-build
-          path: Klimate-app/build
+          path: dist
           retention-days: 7
