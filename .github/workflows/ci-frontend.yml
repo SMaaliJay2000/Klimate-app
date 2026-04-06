@@ -12,7 +12,7 @@ on:
       - "Klimate-app/**"
 
 env:
-  NODE_VERSION: "18.x"
+  NODE_VERSION: "19.x"
 
 jobs:
   build:
