@@ -2,12 +2,12 @@ name: Build Frontend (React)
 
 on:
   push:
-    branches: [master]
+    branches: [main]
     paths:
       - "Klimate-app/**"
       - ".github/workflows/ci-frontend.yml"
   pull_request:
-    branches: [master]
+    branches: [main]
     paths:
       - "Klimate-app/**"
 
