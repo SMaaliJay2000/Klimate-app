@@ -1,0 +1,47 @@
+name: Build Frontend (React)
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - "Klimate-app/**"
+      - ".github/workflows/ci-frontend.yml"
+  pull_request:
+    branches: [master]
+    paths:
+      - "Klimate-app/**"
+
+env:
+  NODE_VERSION: "18.x"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: Klimate-app
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ env.NODE_VERSION }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "npm"
+          cache-dependency-path: Klimate-app/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-build
+          path: Klimate-app/build
+          retention-days: 7
