@@ -1,12 +1,15 @@
 pipeline {
-    agent any 
+   agent { label 'Jenkins-Agent' }
+   tools {
+     nodejs 'NodeJs22'
+   } 
     
     environment {
         // Define image names
         PROD_IMAGE = "maalijay/klimate-app"
         DOCKER_REGISTRY = "docker.io"
         GIT_URL = 'https://github.com/SMaaliJay2000/Klimate-app.git'
-        GIT_CREDENTIALS_ID = 'github-credentials'
+        GIT_CREDENTIALS_ID = 'github'
     }
     
     stages { 
